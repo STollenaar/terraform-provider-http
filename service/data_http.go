@@ -10,18 +10,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"terraform-provider-http/lib"
 )
 
-var _ provider.DataSourceType = (*DataSourceHttpRequestType)(nil)
+var _ datasource.DataSource = &DataSourceHttp{}
 
-type DataSourceHttpRequestType struct{}
+type DataSourceHttp struct{}
 
-func (d DataSourceHttpRequestType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func NewDataSourceHttpRequest() datasource.DataSource {
+	return &DataSourceHttp{}
+}
+
+func (d *DataSourceHttp) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = "http_request"
+}
+
+func (d *DataSourceHttp) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -73,7 +80,7 @@ func (d DataSourceHttpRequestType) GetSchema(_ context.Context) (tfsdk.Schema, d
 
 			"body": {
 				Description: "The response body returned as a string. " +
-					"**NOTE**: This is deprecated, use `response_body` instead.",
+					"*NOTE*: This is deprecated, use `response_body` instead.",
 				Type:               types.StringType,
 				Computed:           true,
 				DeprecationMessage: "Use response_body instead",
@@ -96,14 +103,6 @@ func (d DataSourceHttpRequestType) GetSchema(_ context.Context) (tfsdk.Schema, d
 		},
 	}, nil
 }
-
-func (d *DataSourceHttpRequestType) NewDataSource(context.Context, provider.Provider) (datasource.DataSource, diag.Diagnostics) {
-	return &DataSourceHttp{}, nil
-}
-
-var _ datasource.DataSource = (*DataSourceHttp)(nil)
-
-type DataSourceHttp struct{}
 
 func (d *DataSourceHttp) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var model httpmodel
@@ -182,6 +181,6 @@ func (d *DataSourceHttp) Read(ctx context.Context, req datasource.ReadRequest, r
 	model.Body = types.String{Value: responseBody}
 	model.StatusCode = types.Int64{Value: int64(response.StatusCode)}
 
-	diags = resp.State.Set(ctx, model)
+	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 }

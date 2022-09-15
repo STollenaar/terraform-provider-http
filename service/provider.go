@@ -8,8 +8,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
@@ -17,17 +19,24 @@ import (
 var stderr = os.Stderr
 
 func New() provider.Provider {
-	return &terraformProvider{}
+	return &TerraformProvider{}
 }
 
-type terraformProvider struct {
+var _ provider.Provider = &TerraformProvider{}
+
+type TerraformProvider struct {
 	configured bool
 }
 
 // Provider schema struct
 type providerData struct{}
 
-func (p *terraformProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+// With the provider.Provider implementation
+func (p *TerraformProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "http"
+}
+
+func (p *TerraformProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	fmt.Fprintf(stderr, "[DEBUG]- Already encountered an error")
 	var config providerData
 	diags := req.Config.Get(ctx, &config)
@@ -41,24 +50,24 @@ func (p *terraformProvider) Configure(ctx context.Context, req provider.Configur
 }
 
 // GetSchema -
-func (p *terraformProvider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (p *TerraformProvider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{},
 	}, nil
 }
 
-// GetDataSources - Defines provider data sources
-func (p *terraformProvider) GetDataSources(_ context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	return map[string]provider.DataSourceType{
-		"http_request": &DataSourceHttpRequestType{},
-	}, nil
+// DataSources - Defines provider data sources
+func (p *TerraformProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		NewDataSourceHttpRequest,
+	}
 }
 
-// GetResources - Defines provider resources
-func (p *terraformProvider) GetResources(_ context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
-	return map[string]provider.ResourceType{
-		"http_request": &ResourceHttpRequestType{},
-	}, nil
+// Resources - Defines provider resources
+func (p *TerraformProvider) Resources(_ context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		NewResourceHttpRequest,
+	}
 }
 
 func isContentTypeText(contentType string) bool {

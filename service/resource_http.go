@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -17,11 +16,19 @@ import (
 	"terraform-provider-http/lib"
 )
 
-var _ provider.ResourceType = (*ResourceHttpRequestType)(nil)
+var _ resource.Resource = &ResourceHttp{}
 
-type ResourceHttpRequestType struct{}
+type ResourceHttp struct{}
 
-func (d ResourceHttpRequestType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func NewResourceHttpRequest() resource.Resource {
+	return &ResourceHttp{}
+}
+
+func (r *ResourceHttp) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = "http_request"
+}
+
+func (r *ResourceHttp) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -96,14 +103,6 @@ func (d ResourceHttpRequestType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 		},
 	}, nil
 }
-
-func (d *ResourceHttpRequestType) NewResource(context.Context, provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &ResourceHttp{}, nil
-}
-
-var _ resource.Resource = (*ResourceHttp)(nil)
-
-type ResourceHttp struct{}
 
 func (r *ResourceHttp) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
@@ -188,7 +187,7 @@ func (r *ResourceHttp) Create(ctx context.Context, req resource.CreateRequest, r
 	model.Body = types.String{Value: responseBody}
 	model.StatusCode = types.Int64{Value: int64(response.StatusCode)}
 
-	diags = resp.State.Set(ctx, model)
+	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 }
 
