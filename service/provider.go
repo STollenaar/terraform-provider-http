@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"mime"
-	"os"
 	"regexp"
 	"strings"
 
@@ -16,20 +14,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
-var stderr = os.Stderr
-
-func New() provider.Provider {
-	return &TerraformProvider{}
-}
-
 var _ provider.Provider = &TerraformProvider{}
 
 type TerraformProvider struct {
-	configured bool
+	Version string
 }
 
-// Provider schema struct
-type providerData struct{}
+func New(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &TerraformProvider{
+			Version: version,
+		}
+	}
+}
 
 // With the provider.Provider implementation
 func (p *TerraformProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -37,16 +34,6 @@ func (p *TerraformProvider) Metadata(ctx context.Context, req provider.MetadataR
 }
 
 func (p *TerraformProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	fmt.Fprintf(stderr, "[DEBUG]- Already encountered an error")
-	var config providerData
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		fmt.Fprint(stderr, "[DEBUG]- Already encountered an error")
-		return
-	}
-
-	p.configured = true
 }
 
 // GetSchema -

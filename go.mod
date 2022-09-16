@@ -3,7 +3,7 @@ module terraform-provider-http
 go 1.18
 
 require (
-	github.com/hashicorp/terraform-plugin-framework v0.12.0
+	github.com/hashicorp/terraform-plugin-framework v0.13.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.5.0
 )
 
